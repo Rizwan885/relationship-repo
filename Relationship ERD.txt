@@ -1,0 +1,109 @@
+table contains simple single
+composite attribute : multiple values represent single composite attribut
+it decompose skip in table
+
+multivalued: multiple phone numbers { }
+foriegn key , primary key
+
+//---------- One to One
+$stu=Student::find(1);
+$stu->profile
+1) check profile is null
+2) create new or update
+$stu->profile()->create(array);
+$stu->refresh();   saving to db
+
+3) Removing Profile data
+Profile::truncate();
+
+//--------------One to Many
+same create as one to one
+remember to check null 
+
+1) doesnt have comments
+Student::doesntHave('comments')
+2) has comment
+Student::has('comments')
+
+3) Has More than 3 comments
+Student::has('comments','>',3)->get()	
+
+4) Put Functionality on child with parent using "With" method
+Student::where('id',1)->with(['comments'=>function($query){$query->orederBy('id','desc')
+}])->get();
+
+5). Specific columns of child
+Student::where('id',1)->with(['comments:comment'])->get()
+
+6) Count Comments of student
+Student::withCount('comments')->get()
+
+7) Count Comments of student with condition
+Student::withCount('comments',funciton($query){
+$query->where('comment','like','%stu1')
+})->get()
+
+=======Many to Many
+return $this->belongsToMany(class,pivottable,forignkey,foriegnkey)
+pivot coumn
+$stu1->subjects()->save($sub1,['marks'=>20])
+
+===========Has One Through
+one to one
+student->profile->profiledetails
+
+1) first make relation between profile and profiledetails with foriegn key profile_id
+2) In student model
+public function profiledetails(){
+return $this->hasOneThrogh(profiledetailsclass,profileclass,parentforignid student_id,childforiegnid profile_id)
+$stu1->profiledetails
+===========Has Many Through
+One to Many
+student->comments->likes
+1)first make relation between comments and likes with foriegn key comment_id in likes table
+2) in student model
+public function likesdetail(){
+return $this->hasManyThrough(likesclass,commentsclass,parentforignid studentid,childforignid comment_id,'id','id')
+}
+$stu1->likesdetail
+
+=============One to One Polymorphic  
+student,teacher->profile
+1)create table student, teacher and profile
+in Profile table
+profileable_id, profileable_type columns add
+2)In Profile Model
+public function profileable(){
+return $this->morphTo();
+}
+3) In Student Model
+public function profile(
+return $this->morphOne(profile:class,'profileable')
+
+4) $stu->profile()->create(['email,phone'])
+
+5)In AppServiceProvider boot method
+Relaiton::morphMap(['students'=>'App\Models\Student'])
+5 specific email student
+
+Profile::whereHasMorph(
+'profileable','App\Models\Student',function($q){$q->where('email','like','%abc.com')})->get()
+
+
+=============Many to Many Polymorphic
+student,teacher,subjects
+
+1)create separate table courseable with columns subject_id,courseable_id,courseable_type
+2) in related table subjects
+public function students()
+return $this->morphByMany(Student::class,pivottablename 'courseable')
+public function teachers()
+return $this->morphByMany-------------------------
+3) In Student Model
+public function subjects()
+return $this->morphToMany(subject::class,pivottablename 'courseable')
+4) In Teacher Model 
+same 
+
+5) $stu1->subjects()->attach([1,3])
+6) $teacher->subjects()->attach([2,4])
